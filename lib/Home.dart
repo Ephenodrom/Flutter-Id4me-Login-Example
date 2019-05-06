@@ -21,7 +21,8 @@ class Home extends StatelessWidget {
               style: Theme.of(context).textTheme.headline,
             ),
             SizedBox(height: 10),
-            Text(userInfo["name"], style: Theme.of(context).textTheme.subhead),
+            Text(userInfo["name"] + "(" + userInfo["email"] + ")",
+                style: Theme.of(context).textTheme.subhead),
             SizedBox(height: 10),
             Text("Your login was successfull!\n Thank you for using Id4me.",
                 style: Theme.of(context).textTheme.body1)

@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:id4me_login_example/Home.dart';
 import 'package:id4me_login_example/Id4meLoginWebScreen.dart';
 import 'package:id4me_relying_party_api/id4me_relying_party_api.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 
 void main() => runApp(MyApp());
 
@@ -63,7 +60,23 @@ class _LoginState extends State<Login> {
             ),
             GestureDetector(
               onTap: () async {
-                String url = await buildUrl(controller.text);
+                Map<String, dynamic> properties = {
+                  Id4meConstants.KEY_CLIENT_NAME: "ID4me Demo",
+                  Id4meConstants.KEY_LOGO_URI:
+                      "https://www.androidpit.com/img/logo/favicon.png",
+                  Id4meConstants.KEY_REDIRECT_URI: "https://id4meredirect.com",
+                  Id4meConstants.KEY_DNS_RESOLVER: "8.8.8.8",
+                  Id4meConstants.KEY_DNSSEC_REQUIRED: false
+                };
+
+                Id4meClaimsParameters claimsParameters =
+                    new Id4meClaimsParameters();
+                claimsParameters.entries
+                    .add(Entry("email", true, "Needed to create the profile"));
+                claimsParameters.entries
+                    .add(Entry("name", true, "Displayname in the user dat"));
+                String url = await buildUrl(
+                    controller.text, properties, claimsParameters);
                 String code = await Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -88,32 +101,17 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Future<String> buildUrl(String domain) async {
-    Map<String, dynamic> properties = {
-      Id4meConstants.KEY_CLIENT_NAME: "ID4me Demo",
-      Id4meConstants.KEY_LOGO_URI:
-          "https://www.androidpit.com/img/logo/favicon.png",
-      Id4meConstants.KEY_REDIRECT_URI: "https://id4meredirect.com",
-      Id4meConstants.KEY_DNS_RESOLVER: "8.8.8.8",
-      Id4meConstants.KEY_DNSSEC_REQUIRED: false
-    };
+  Future<Map<String, dynamic>> processLogin(String code) async {
+    await logon.authenticate(sessionData, code);
+    return await logon.fetchUserinfo(sessionData);
+  }
 
-    Id4meClaimsParameters claimsParameters = new Id4meClaimsParameters();
-    claimsParameters.entries
-        .add(Entry("email", true, "Needed to create the profile"));
-    claimsParameters.entries
-        .add(Entry("name", false, "Displayname in the user dat"));
-    claimsParameters.entries.add(Entry("given_name", false, ""));
-
+  Future<String> buildUrl(String domain, Map<String, dynamic> properties,
+      Id4meClaimsParameters claimsParameters) async {
     logon = new Id4meLogon(
         properties: properties, claimsParameters: claimsParameters);
 
     sessionData = await logon.createSessionData(domain, true);
     return logon.buildAuthorizationUrl(sessionData);
-  }
-
-  Future<Map<String, dynamic>> processLogin(String code) async {
-    await logon.authenticate(sessionData, code);
-    return await logon.fetchUserinfo(sessionData);
   }
 }
